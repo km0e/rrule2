@@ -179,19 +179,17 @@ impl Display for NWeekday {
     /// use rrule::NWeekday;
     ///
     /// assert_eq!(format!("{}", NWeekday::Every(Weekday::Mon)), "MO");
-    /// assert_eq!(format!("{}", NWeekday::Nth(1, Weekday::Mon)), "MO");
+    /// assert_eq!(format!("{}", NWeekday::Nth(1, Weekday::Mon)), "1MO");
     /// assert_eq!(format!("{}", NWeekday::Nth(2, Weekday::Mon)), "2MO");
+    /// assert_eq!(format!("{}", NWeekday::Nth(-1, Weekday::Mon)), "-1MO");
     /// ```
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let weekday = match self {
             Self::Every(wd) => weekday_to_str(*wd),
-            Self::Nth(number, wd) => {
-                let mut wd_str = weekday_to_str(*wd);
-                if *number != 1 {
-                    wd_str = format!("{}{}", number, wd_str);
-                };
-                wd_str
-            }
+            // Always include the ordinal for `Nth`: without it, `Nth(1, ...)`
+            // would serialize the same as `Every`, which has different
+            // semantics. See fmeringdal/rust-rrule#148.
+            Self::Nth(number, wd) => format!("{}{}", number, weekday_to_str(*wd)),
         };
 
         write!(f, "{}", weekday)

@@ -169,6 +169,25 @@ mod tests {
     }
 
     #[test]
+    fn nweekday_display_includes_nth_ordinal() {
+        // Regression test for fmeringdal/rust-rrule#148: `Nth(1, ...)` must
+        // serialize with the ordinal, since `MO` (= `Every`) and `1MO`
+        // (= `Nth(1, ...)`) have different semantics.
+        let tests = [
+            (NWeekday::Every(Weekday::Mon), "MO"),
+            (NWeekday::Nth(1, Weekday::Mon), "1MO"),
+            (NWeekday::Nth(2, Weekday::Mon), "2MO"),
+            (NWeekday::Nth(-1, Weekday::Thu), "-1TH"),
+        ];
+
+        for (nweekday, expected) in tests {
+            assert_eq!(nweekday.to_string(), expected);
+            // The serialized value parses back to the same value.
+            assert_eq!(parse_weekdays(expected), Ok(vec![nweekday]));
+        }
+    }
+
+    #[test]
     fn rejects_invalid_nweekdays() {
         let tests = ["", "    ", "fjoasfjapsjop", "MONDAY", "MONDAY, TUESDAY"];
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix `RRuleSet` emitting a duplicate occurrence when an `RDATE` equals a date already produced by an `RRULE` (or another `RRULE`), and when the same `RDATE` is listed more than once, per RFC 5545 §3.8.5.3 ([#150](https://github.com/fmeringdal/rust-rrule/issues/150))
+- `Display` for `NWeekday::Nth` now always includes the ordinal, so `Nth(1, ...)` serializes to `1MO` instead of `MO` (which means `Every` and has different semantics) ([#148](https://github.com/fmeringdal/rust-rrule/issues/148))
 
 ## 0.14.0 (2025-04-20)
 
