@@ -5,7 +5,7 @@ use take_rrule::take_rrule_from_data;
 
 use afl::fuzz;
 use core::str::FromStr;
-use rrule::RRuleSet;
+use rrule2::RRuleSet;
 use std::str;
 
 #[allow(clippy::single_match)]

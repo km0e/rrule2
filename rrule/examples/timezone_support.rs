@@ -5,7 +5,7 @@
 //! in UTC and collides with one of those recurrences.
 
 use chrono::{DateTime, TimeZone};
-use rrule::{Frequency, RRule, Tz};
+use rrule2::{Frequency, RRule, Tz};
 
 fn main() {
     let tz = Tz::Europe__Berlin;

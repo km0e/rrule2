@@ -1,12 +1,12 @@
 <h1 align="center">RRule.rs</h1>
 <p align="center">A pure and efficient Rust implementation of recurrence rules as defined in the iCalendar RFC.</p>
 <p align="center">
-  <a href="https://codecov.io/gh/fmeringdal/rust-rrule">
-    <img src="https://codecov.io/gh/fmeringdal/rust-rrule/branch/main/graph/badge.svg?token=UneXhtuXWo"/>
-  </a>
-  <a href="https://crates.io/crates/rrule"><img src="https://img.shields.io/crates/v/rrule.svg" /></a>
-  <a href="https://docs.rs/rrule/latest/rrule/"><img src="https://img.shields.io/badge/docs-rrule-blue" /></a>
+  <a href="https://crates.io/crates/rrule2"><img src="https://img.shields.io/crates/v/rrule2.svg" /></a>
+  <a href="https://docs.rs/rrule2/latest/rrule2/"><img src="https://img.shields.io/badge/docs-rrule2-blue" /></a>
 </p>
+
+> **Fork notice**: `rrule2` is a maintained fork of the excellent [`rrule` crate](https://crates.io/crates/rrule) by [fmeringdal/rust-rrule](https://github.com/fmeringdal/rust-rrule), published as a separate crate to ship additional fixes.
+> API is unchanged relative to `rrule` 0.14.0 — see the [CHANGELOG](CHANGELOG.md) for what is fixed.
 
 ## Specification
 
@@ -38,7 +38,7 @@ If you notice that the implementation differs from the specifications above, ple
 ## Library Usage
 
 ```rust
-use rrule::RRuleSet;
+use rrule2::RRuleSet;
 
 // RRule that starts 2012.02.01 and occurs daily for 3 days.
 let rrule: RRuleSet = "DTSTART:20120201T093000Z\nRRULE:FREQ=DAILY;COUNT=3".parse().unwrap();
@@ -50,25 +50,25 @@ let result = rrule.all(limit);
 assert_eq!(result.dates.len(), 3);
 ```
 
-See more examples at [docs.rs](https://docs.rs/rrule)
+See more examples at [docs.rs](https://docs.rs/rrule2)
 
 ## Command Line Tool Usage
 
 Install the command line tool with:
 
 ```bash
-cargo install rrule --features="cli-tool"
+cargo install rrule2 --features="cli-tool"
 ```
 
 Then run it with:
 
 ```bash
-rrule "DTSTART:20120201T093000Z\nRRULE:FREQ=DAILY;COUNT=3"
+rrule2 "DTSTART:20120201T093000Z\nRRULE:FREQ=DAILY;COUNT=3"
 ```
 
 ## Security
 
-You should read the [security docs](https://github.com/fmeringdal/rust-rrule/blob/main/SECURITY.md) if you use arbitrary inputs from users for constructing the recurrence rules.
+You should read the [security docs](https://github.com/km0e/rust-rrule/blob/main/SECURITY.md) if you use arbitrary inputs from users for constructing the recurrence rules.
 
 ## Limitation and limits
 

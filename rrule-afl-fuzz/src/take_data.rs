@@ -1,7 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use chrono::{DateTime, TimeZone, Utc, Weekday};
-use rrule::{NWeekday, Tz};
+use rrule2::{NWeekday, Tz};
 use std::convert::TryInto;
 
 // https://doc.rust-lang.org/std/mem/fn.size_of.html

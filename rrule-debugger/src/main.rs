@@ -13,7 +13,7 @@ use chrono::DateTime;
 use clap::ArgAction;
 use clap::Parser;
 use log::LevelFilter;
-use rrule::Tz;
+use rrule2::Tz;
 
 const CRASHES_PATH: &str = "rrule-afl-fuzz/out/default/crashes/";
 

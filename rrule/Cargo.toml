@@ -1,10 +1,10 @@
 [package]
-name = "rrule"
-description = "A pure Rust implementation of recurrence rules as defined in the iCalendar RFC."
-version = "0.14.0"
-documentation = "https://docs.rs/rrule"
-repository = "https://github.com/fmeringdal/rust-rrule"
-authors = ["Fredrik Meringdal", "Ralph Bisschops <ralph.bisschops.dev@gmail.com>"]
+name = "rrule2"
+description = "A pure Rust implementation of recurrence rules as defined in the iCalendar RFC. Fork of the `rrule` crate with additional fixes."
+version = "0.14.1"
+documentation = "https://docs.rs/rrule2"
+repository = "https://github.com/km0e/rust-rrule"
+authors = ["Fredrik Meringdal", "Ralph Bisschops <ralph.bisschops.dev@gmail.com>", "km0e"]
 readme = "../README.md"
 keywords = ["calendar", "rrule", "ical"]
 categories = ["date-and-time"]
@@ -26,7 +26,8 @@ serde_json = "1.0.135"
 orig_serde = { package = "serde", version = "1.0.217", default-features = false, features = ["derive"] }
 
 [[bin]]
-name = "rrule"
+name = "rrule2"
+path = "src/bin/rrule.rs"
 required-features = ["cli-tool"]
 
 [features]

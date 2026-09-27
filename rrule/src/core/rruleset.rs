@@ -180,7 +180,7 @@ impl RRuleSet {
     /// # Usage
     ///
     /// ```
-    /// use rrule::RRuleSet;
+    /// use rrule2::RRuleSet;
     ///
     /// let rrule_set: RRuleSet = "DTSTART:20210101T090000Z\nRRULE:FREQ=DAILY".parse().unwrap();
     ///

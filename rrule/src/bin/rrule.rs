@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use clap::Parser;
-use rrule::RRuleSet;
+use rrule2::RRuleSet;
 
 /// Recurrence Rule parser and iterator
 ///

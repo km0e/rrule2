@@ -10,7 +10,7 @@ fn main() {
     #[cfg(feature = "exrule")]
     {
         use chrono::{Datelike, TimeZone};
-        use rrule::{Frequency, NWeekday, RRule, Tz, Weekday};
+        use rrule2::{Frequency, NWeekday, RRule, Tz, Weekday};
         // Build an rrule set that occurs weekly on Tuesday and Wednesday
         let rrule_set = RRule::default()
             .count(4)

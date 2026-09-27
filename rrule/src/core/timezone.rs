@@ -5,7 +5,7 @@ use chrono::Local;
 /// # Usage
 ///
 /// ```
-/// use rrule::Tz;
+/// use rrule2::Tz;
 ///
 /// let utc = Tz::UTC;
 /// let local = Tz::LOCAL;

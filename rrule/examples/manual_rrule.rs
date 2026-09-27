@@ -3,7 +3,7 @@
 //! Create an [`RRule`] object.
 
 use chrono::{Datelike, TimeZone, Timelike};
-use rrule::{Frequency, RRule, Tz};
+use rrule2::{Frequency, RRule, Tz};
 
 fn main() {
     // Build an RRuleSet that starts the first day in 2020 at 9:00AM and occurs daily 5 times

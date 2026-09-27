@@ -3,7 +3,7 @@
 use crate::take_data::*;
 use chrono::Month;
 use num_traits::cast::FromPrimitive;
-use rrule::{Frequency, RRule, RRuleSet};
+use rrule2::{Frequency, RRule, RRuleSet};
 
 /// This function uses the data to construct a deterministic input for [`RRuleSet`].
 /// This can also be used to reconstruct the [`RRuleSet`] from crashes in order to debug the code.

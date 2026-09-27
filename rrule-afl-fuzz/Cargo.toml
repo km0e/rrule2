@@ -14,9 +14,9 @@ afl = "*"
 chrono = "0.4.39"
 num-traits = "0.2.19"
 
-[dependencies.rrule]
+[dependencies.rrule2]
 path = "../rrule"
 
 [features]
 default = []
-by-easter = ["rrule/by-easter"]
+by-easter = ["rrule2/by-easter"]

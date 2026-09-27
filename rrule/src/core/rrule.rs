@@ -134,7 +134,7 @@ impl NWeekday {
     ///
     /// ```
     /// use chrono::Weekday;
-    /// use rrule::NWeekday;
+    /// use rrule2::NWeekday;
     ///
     /// let nth_weekday = NWeekday::new(Some(1), Weekday::Mon);
     /// ```
@@ -176,7 +176,7 @@ impl Display for NWeekday {
     ///
     /// ```
     /// use chrono::Weekday;
-    /// use rrule::NWeekday;
+    /// use rrule2::NWeekday;
     ///
     /// assert_eq!(format!("{}", NWeekday::Every(Weekday::Mon)), "MO");
     /// assert_eq!(format!("{}", NWeekday::Nth(1, Weekday::Mon)), "1MO");
