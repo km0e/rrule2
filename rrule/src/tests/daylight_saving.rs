@@ -65,3 +65,64 @@ fn daylight_savings_2() {
         ],
     );
 }
+
+#[test]
+fn daylight_savings_dtstart_in_gap() {
+    // Regression test for fmeringdal/rust-rrule#109/#115: a DTSTART that
+    // falls in a DST gap (the local time does not exist) must be parsed
+    // instead of rejected. Per RFC 5545 §3.3.5 it is interpreted using the
+    // UTC offset before the gap, so `20240331T013000` in Europe/London
+    // (clocks jump 01:00 GMT -> 02:00 BST) becomes 01:30 UTC = 02:30 BST.
+    let dates = "DTSTART;TZID=Europe/London:20240331T013000\n\
+        RRULE:FREQ=DAILY;COUNT=3"
+        .parse::<RRuleSet>()
+        .unwrap()
+        .all(u16::MAX)
+        .dates;
+    check_occurrences(
+        &dates,
+        &[
+            "2024-03-31T02:30:00+01:00",
+            "2024-04-01T02:30:00+01:00",
+            "2024-04-02T02:30:00+01:00",
+        ],
+    );
+}
+
+#[test]
+fn daylight_savings_dtstart_ambiguous() {
+    // Regression test for fmeringdal/rust-rrule#109/#115: a DTSTART that
+    // occurs twice (when the clocks go back) must be parsed instead of
+    // rejected. Per RFC 5545 §3.3.5 it is interpreted using the UTC offset
+    // before the transition, so `20241027T013000` in Europe/London (clocks
+    // fall back 02:00 BST -> 01:00 GMT) is the earlier occurrence, 01:30 BST.
+    let dates = "DTSTART;TZID=Europe/London:20241027T013000\n\
+        RRULE:FREQ=DAILY;COUNT=3"
+        .parse::<RRuleSet>()
+        .unwrap()
+        .all(u16::MAX)
+        .dates;
+    check_occurrences(
+        &dates,
+        &[
+            "2024-10-27T01:30:00+01:00",
+            "2024-10-28T01:30:00+00:00",
+            "2024-10-29T01:30:00+00:00",
+        ],
+    );
+}
+
+#[test]
+fn daylight_savings_rdate_in_gap() {
+    // RDATE/EXDATE values go through the same resolution as DTSTART.
+    let dates = "DTSTART;TZID=Europe/London:20240401T093000\n\
+        RDATE;TZID=Europe/London:20250330T013000"
+        .parse::<RRuleSet>()
+        .unwrap()
+        .all(u16::MAX)
+        .dates;
+    check_occurrences(
+        &dates,
+        &["2025-03-30T02:30:00+01:00"], // RDATE, resolved out of the gap.
+    );
+}

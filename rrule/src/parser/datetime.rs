@@ -2,7 +2,46 @@ use std::str::FromStr;
 
 use super::{regex::ParsedDateString, ParseError};
 use crate::{core::Tz, NWeekday};
-use chrono::{NaiveDate, TimeZone, Weekday};
+use chrono::{Duration, LocalResult, NaiveDate, NaiveDateTime, Offset, TimeZone, Weekday};
+
+/// Resolves a naive local datetime to a zoned datetime, following the
+/// interpretation rules of RFC 5545 §3.3.5:
+///
+/// - A local time that occurs twice (when changing from daylight to standard
+///   time) is interpreted using the UTC offset before the transition, i.e.
+///   the earlier of the two candidates.
+/// - A local time that does not occur (when changing from standard to
+///   daylight time) is interpreted using the UTC offset before the gap. For
+///   example `TZID=America/New_York:20070311T023000` indicates 07:00 UTC,
+///   which is 03:30 EDT.
+fn resolve_local_datetime(tz: &Tz, naive: NaiveDateTime) -> chrono::DateTime<Tz> {
+    match tz.from_local_datetime(&naive) {
+        LocalResult::Single(datetime) => datetime,
+        LocalResult::Ambiguous(datetime1, _datetime2) => datetime1,
+        LocalResult::None => {
+            // The local time falls in a gap created by a DST transition
+            // (e.g. 02:30 on the day the clocks jump from 02:00 to 03:00).
+            // Find the offset that was in effect just before the transition
+            // and interpret the datetime with it. Stepping back an hour is
+            // enough for all known real-world transitions, but keep stepping
+            // back to stay robust for larger artificial ones.
+            let mut offset = None;
+            for hours in 1..=48 {
+                if let Some(before) = naive.checked_sub_signed(Duration::hours(hours)) {
+                    if let LocalResult::Single(before_dt) = tz.from_local_datetime(&before) {
+                        offset = Some(*before_dt.offset());
+                        break;
+                    }
+                }
+            }
+            match offset {
+                Some(offset) => tz.from_utc_datetime(&(naive - offset.fix())),
+                // No transition found nearby; interpret the datetime as-is.
+                None => tz.from_utc_datetime(&naive),
+            }
+        }
+    }
+}
 
 /// Attempts to convert a `str` to a `chrono_tz::Tz`.
 pub(crate) fn parse_timezone(tz: &str) -> Result<Tz, ParseError> {
@@ -58,50 +97,13 @@ pub(crate) fn datestring_to_date(
         // If a `Z` is present, UTC should be used.
         chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(datetime, chrono::Utc)
             .with_timezone(&Tz::UTC)
+    } else if let Some(tz) = tz {
+        // Use the timezone specified in the `TZID`.
+        resolve_local_datetime(&tz, datetime)
     } else {
-        // If no `Z` is present, local time should be used.
-        use chrono::offset::LocalResult;
-        // Get datetime in local time or machine local time.
-        // So this also takes into account daylight or standard time (summer/winter).
-        if let Some(tz) = tz {
-            // Use the timezone specified in the `tz`
-            match tz.from_local_datetime(&datetime) {
-                LocalResult::None => Err(ParseError::InvalidDateTimeInLocalTimezone {
-                    value: dt.into(),
-                    property: property.into(),
-                }),
-                LocalResult::Single(date) => Ok(date),
-                LocalResult::Ambiguous(date1, date2) => {
-                    Err(ParseError::DateTimeInLocalTimezoneIsAmbiguous {
-                        value: dt.into(),
-                        property: property.into(),
-                        date1: date1.to_rfc3339(),
-                        date2: date2.to_rfc3339(),
-                    })
-                }
-            }?
-        } else {
-            // Use current system timezone
-            // TODO Add option to always use UTC when this is executed on a server.
-            let local = Tz::LOCAL;
-            match local.from_local_datetime(&datetime) {
-                LocalResult::None => {
-                    return Err(ParseError::InvalidDateTimeInLocalTimezone {
-                        value: dt.into(),
-                        property: property.into(),
-                    })
-                }
-                LocalResult::Single(date) => date,
-                LocalResult::Ambiguous(date1, date2) => {
-                    return Err(ParseError::DateTimeInLocalTimezoneIsAmbiguous {
-                        value: dt.into(),
-                        property: property.into(),
-                        date1: date1.to_rfc3339(),
-                        date2: date2.to_rfc3339(),
-                    })
-                }
-            }
-        }
+        // Use the current system timezone.
+        // TODO Add option to always use UTC when this is executed on a server.
+        resolve_local_datetime(&Tz::LOCAL, datetime)
     };
 
     Ok(datetime)

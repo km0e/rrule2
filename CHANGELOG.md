@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `DTSTART`, `RDATE` and `EXDATE` values that fall on a DST transition are no longer
+  rejected. Per RFC 5545 §3.3.5, a local time that does not exist (gap when clocks
+  jump forward) is interpreted using the UTC offset before the gap, and a local time
+  that occurs twice (when clocks fall back) is interpreted using the UTC offset before
+  the transition (the earlier instant)
+  ([#109](https://github.com/fmeringdal/rust-rrule/issues/109),
+  [#115](https://github.com/fmeringdal/rust-rrule/issues/115))
+
 - `Display` for `RRuleSet` no longer corrupts `RDATE` and `EXDATE` values in non-local
   timezones: the local wall clock time used to be emitted with a `Z` (UTC) designator
   appended, shifting the instant by the UTC offset and breaking
