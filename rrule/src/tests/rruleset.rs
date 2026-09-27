@@ -707,3 +707,22 @@ fn identical_rrules_not_duplicated() {
         &[ymd_hms(2024, 1, 1, 9, 0, 0), ymd_hms(2024, 1, 2, 9, 0, 0)],
     );
 }
+
+#[test]
+fn exdate_with_date_value_excludes_occurrence() {
+    // Regression test for fmeringdal/rust-rrule#146: `EXDATE;VALUE=DATE`
+    // (date without time) should be supported without warnings.
+    let rruleset_str = "DTSTART;VALUE=DATE;TZID=UTC:20260401\nRRULE:FREQ=DAILY;COUNT=5\nEXDATE;VALUE=DATE;TZID=UTC:20260403";
+    let rruleset = RRuleSet::from_str(rruleset_str).unwrap();
+
+    test_recurring_rrule_set(
+        rruleset,
+        &[
+            ymd_hms(2026, 4, 1, 0, 0, 0),
+            ymd_hms(2026, 4, 2, 0, 0, 0),
+            // 2026-04-03 is excluded.
+            ymd_hms(2026, 4, 4, 0, 0, 0),
+            ymd_hms(2026, 4, 5, 0, 0, 0),
+        ],
+    );
+}

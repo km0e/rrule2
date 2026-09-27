@@ -46,19 +46,16 @@ impl TryFrom<ContentLineCaptures<'_>> for Vec<chrono::DateTime<Tz>> {
             .map(|val| val.to_ascii_lowercase())
             .as_deref()
         {
-            Some("date") => {
-                warn!(
-                    "Parameter `DATE` is not supported for property name: `{}`. The dates will be interpreter with the `DATE-TIME` parameter instead.",
-                    value.property_name
-                );
-            }
+            // `DATE` (date without time) is a valid value type: the date
+            // string is parsed as midnight in the applicable timezone.
+            // See fmeringdal/rust-rrule#146.
+            Some("date" | "date-time") => {}
             Some("period") => {
                 warn!(
                     "Parameter `PERIOD` is not supported for property name: `{}`. The dates will be interpreter with the `DATE-TIME` parameter instead.",
                     value.property_name
                 );
             }
-            Some("date-time") => {}
             Some(param) => {
                 warn!(
                     "Encountered unexpected parameter `{param}` for property name: `{}`",
@@ -128,6 +125,14 @@ mod tests {
                     UTC.with_ymd_and_hms(1997, 2, 17, 0, 0, 0).unwrap(),
                     UTC.with_ymd_and_hms(1997, 4, 21, 0, 0, 0).unwrap(),
                 ],
+            ),
+            (
+                ContentLineCaptures {
+                    property_name: PropertyName::ExDate,
+                    parameters: Some("VALUE=DATE;TZID=UTC"),
+                    value: "19970101",
+                },
+                vec![UTC.with_ymd_and_hms(1997, 1, 1, 0, 0, 0).unwrap()],
             ),
         ];
 
