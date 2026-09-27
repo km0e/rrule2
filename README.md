@@ -68,7 +68,7 @@ rrule2 "DTSTART:20120201T093000Z\nRRULE:FREQ=DAILY;COUNT=3"
 
 ## Security
 
-You should read the [security docs](https://github.com/km0e/rust-rrule/blob/main/SECURITY.md) if you use arbitrary inputs from users for constructing the recurrence rules.
+You should read the [security docs](https://github.com/km0e/rrule2/blob/main/SECURITY.md) if you use arbitrary inputs from users for constructing the recurrence rules.
 
 ## Limitation and limits
 
