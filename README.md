@@ -103,6 +103,69 @@ Limitations:
 By default, the "Arbitrary Limit" is used. If you instead want to use the "Crate Limit".
 Make sure you [understand the risks that come with this](#safety).
 
+## Behavior notes
+
+Notes on edge cases of RFC 5545 that come up regularly.
+
+### `DTSTART` and the first occurrence
+
+RFC 5545 recommends ("SHOULD") that `DTSTART` is synchronized with the recurrence
+rule (e.g. a `BYDAY=WE` rule should start on a Wednesday). If it is not, the
+standard leaves the result **undefined**. This crate generates only the
+occurrences produced by the rule: an unsynchronized `DTSTART` is not force-added
+as a first instance, and `COUNT` counts the rule's occurrences.
+
+Google Calendar behaves differently: it always emits the `DTSTART` as the first
+instance, even when it does not match the rule (and even when `COUNT` then
+produces one more event than requested). To reproduce Google's behavior, list
+the `DTSTART` as an `RDATE` explicitly:
+
+```
+DTSTART;TZID=Europe/Berlin:20240530T200000
+RDATE;TZID=Europe/Berlin:20240530T200000
+RRULE:FREQ=WEEKLY;COUNT=3;BYDAY=WE
+```
+
+This is safe even when `DTSTART` *does* match the rule: duplicate instants are
+removed from the recurrence set (RFC 5545 §3.8.5.3).
+
+References: [fmeringdal/rust-rrule#119](https://github.com/fmeringdal/rust-rrule/issues/119),
+[RFC 5545 §3.8.5.3](https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html).
+
+### `FREQ=YEARLY` without `BYMONTH`
+
+With `FREQ=YEARLY`, a `BYMONTHDAY` (or `BYDAY`, ...) without `BYMONTH` expands
+within **every month of the year**: `RRULE:FREQ=YEARLY;BYMONTHDAY=20` means
+"the 20th of every month, every year", not "yearly on the 20th". This follows
+the expansion semantics of RFC 5545 and matches python-dateutil and librrule.
+
+To get a yearly occurrence on a specific day, name the month:
+
+```
+RRULE:FREQ=YEARLY;BYMONTH=4;BYMONTHDAY=20   → yearly on April 20
+```
+
+Reference: [fmeringdal/rust-rrule#127](https://github.com/fmeringdal/rust-rrule/issues/127).
+
+### Daylight saving time
+
+Occurrences follow the wall clock of the `DTSTART` timezone. When an occurrence
+lands on a DST transition:
+
+- A time that does not exist (spring-forward gap) is interpreted using the UTC
+  offset **before** the gap, per RFC 5545 §3.3.5 (e.g. `01:30` on the day
+  Europe/London jumps to BST is generated as `01:30 GMT` = `02:30 BST`).
+- A time that occurs twice (fall-back) is generated once, using the offset
+  before the transition (the earlier instant).
+- Duplicate instants are never emitted, and `COUNT` counts distinct
+  occurrences.
+
+The same rules apply to parsing `DTSTART`, `RDATE` and `EXDATE` values on
+transition days.
+
+References: [fmeringdal/rust-rrule#109](https://github.com/fmeringdal/rust-rrule/issues/109),
+[fmeringdal/rust-rrule#115](https://github.com/fmeringdal/rust-rrule/issues/115).
+
 ## Inspired by
 
 - [python-dateutil library](http://labix.org/python-dateutil/)

@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the iterator API), and iteration stops at the first occurrence past `dt`
   ([#81](https://github.com/fmeringdal/rust-rrule/issues/81))
 
+### Documentation
+
+- Add a "Behavior notes" section to the README covering the recurring questions:
+  unsynchronized `DTSTART` (and how to reproduce Google Calendar's behavior via an
+  explicit `RDATE`, [#119](https://github.com/fmeringdal/rust-rrule/issues/119)),
+  `FREQ=YEARLY` without `BYMONTH` expanding to every month
+  ([#127](https://github.com/fmeringdal/rust-rrule/issues/127)), and the DST semantics
+  for gap/ambiguous times ([#109](https://github.com/fmeringdal/rust-rrule/issues/109),
+  [#115](https://github.com/fmeringdal/rust-rrule/issues/115))
+
 ### Fixed
 
 - The iterator no longer emits the same instant twice on a DST spring-forward day.
