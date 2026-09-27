@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `RRuleSet::before_exclusive(dt)` and `RRuleSet::after_exclusive(dt)`: bounds that
+  exclude the boundary datetime itself, mirroring the `inc=False` default of
+  `dateutil.rrule.rruleset.before`/`after`/`between`. The existing `before`/`after`
+  methods keep their historical inclusive behavior and are now documented as such,
+  so half-open windows (e.g. for pagination) can be expressed directly:
+  `set.after_exclusive(a).before_exclusive(b).all(limit)`
+
 ### Changed (breaking)
 
 - `RRuleResult` (returned by `RRuleSet::all`) gains a `has_more` field: `true` if the

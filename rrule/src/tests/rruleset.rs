@@ -908,3 +908,81 @@ fn all_reports_has_more_false_when_until_ends_within_limit() {
     assert!(!result.limited);
     assert!(!result.has_more);
 }
+
+#[test]
+fn before_bound_is_inclusive_by_default() {
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=3"
+        .parse()
+        .unwrap();
+    let third = ymd_hms(2024, 1, 3, 9, 0, 0);
+
+    let dates = rruleset.clone().before(third).all(u16::MAX).dates;
+    assert_eq!(dates.len(), 3, "inclusive bound keeps the boundary date");
+
+    let dates = rruleset.all_unchecked();
+    assert_eq!(dates.len(), 3);
+}
+
+#[test]
+fn before_exclusive_bound_drops_boundary_date() {
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=3"
+        .parse()
+        .unwrap();
+    let third = ymd_hms(2024, 1, 3, 9, 0, 0);
+
+    let dates = rruleset.clone().before_exclusive(third).all(u16::MAX).dates;
+    assert_eq!(
+        dates.len(),
+        2,
+        "exclusive bound drops the boundary date; got {dates:?}"
+    );
+    assert_eq!(dates.last().unwrap(), &ymd_hms(2024, 1, 2, 9, 0, 0));
+
+    let dates = rruleset.before_exclusive(third).all_unchecked();
+    assert_eq!(dates.len(), 2);
+}
+
+#[test]
+fn after_exclusive_bound_drops_boundary_date() {
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=3"
+        .parse()
+        .unwrap();
+    let first = ymd_hms(2024, 1, 1, 9, 0, 0);
+
+    let dates = rruleset
+        .clone()
+        .after_exclusive(first)
+        .all(u16::MAX)
+        .dates;
+    assert_eq!(
+        dates.len(),
+        2,
+        "exclusive bound drops the boundary date; got {dates:?}"
+    );
+    assert_eq!(dates.first().unwrap(), &ymd_hms(2024, 1, 2, 9, 0, 0));
+
+    // Inclusive `after` (the historical behavior) keeps it.
+    let dates = rruleset.after(first).all(u16::MAX).dates;
+    assert_eq!(dates.len(), 3);
+}
+
+#[test]
+fn exclusive_bounds_window() {
+    // Half-open window (the common pagination shape): both ends exclusive.
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=5"
+        .parse()
+        .unwrap();
+
+    let dates = rruleset
+        .after_exclusive(ymd_hms(2024, 1, 1, 9, 0, 0))
+        .before_exclusive(ymd_hms(2024, 1, 4, 9, 0, 0))
+        .all(u16::MAX)
+        .dates;
+    assert_eq!(
+        dates,
+        vec![
+            ymd_hms(2024, 1, 2, 9, 0, 0),
+            ymd_hms(2024, 1, 3, 9, 0, 0),
+        ]
+    );
+}

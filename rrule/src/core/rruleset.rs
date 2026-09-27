@@ -27,6 +27,10 @@ pub struct RRuleSet {
     pub(crate) before: Option<DateTime<Tz>>,
     /// If set, all returned recurrences must be after this date.
     pub(crate) after: Option<DateTime<Tz>>,
+    /// Whether the `before` bound includes the bound datetime itself.
+    pub(crate) before_inclusive: bool,
+    /// Whether the `after` bound includes the bound datetime itself.
+    pub(crate) after_inclusive: bool,
     /// If validation limits are enabled
     pub(crate) limited: bool,
 }
@@ -70,6 +74,8 @@ impl RRuleSet {
             exdate: vec![],
             before: None,
             after: None,
+            before_inclusive: true,
+            after_inclusive: true,
             limited: false,
         }
     }
@@ -85,19 +91,55 @@ impl RRuleSet {
 
     /// Only return recurrences that comes before this `DateTime`.
     ///
+    /// The bound is inclusive: a recurrence exactly at `dt` is returned.
+    /// See also [`RRuleSet::before_exclusive`].
+    ///
     /// This value will not be used if you use the `Iterator` API directly.
     #[must_use]
     pub fn before(mut self, dt: DateTime<Tz>) -> Self {
         self.before = Some(dt);
+        self.before_inclusive = true;
+        self
+    }
+
+    /// Only return recurrences that come strictly before this `DateTime`.
+    ///
+    /// The bound is exclusive: a recurrence exactly at `dt` is not returned.
+    /// This mirrors the `inc=False` behavior of
+    /// `dateutil.rrule.rruleset.before`. See also [`RRuleSet::before`].
+    ///
+    /// This value will not be used if you use the `Iterator` API directly.
+    #[must_use]
+    pub fn before_exclusive(mut self, dt: DateTime<Tz>) -> Self {
+        self.before = Some(dt);
+        self.before_inclusive = false;
         self
     }
 
     /// Only return recurrences that comes after this `DateTime`.
     ///
+    /// The bound is inclusive: a recurrence exactly at `dt` is returned.
+    /// See also [`RRuleSet::after_exclusive`].
+    ///
     /// This value will not be used if you use the `Iterator` API directly.
     #[must_use]
     pub fn after(mut self, dt: DateTime<Tz>) -> Self {
         self.after = Some(dt);
+        self.after_inclusive = true;
+        self
+    }
+
+    /// Only return recurrences that come strictly after this `DateTime`.
+    ///
+    /// The bound is exclusive: a recurrence exactly at `dt` is not returned.
+    /// This mirrors the `inc=False` behavior of
+    /// `dateutil.rrule.rruleset.after`. See also [`RRuleSet::after`].
+    ///
+    /// This value will not be used if you use the `Iterator` API directly.
+    #[must_use]
+    pub fn after_exclusive(mut self, dt: DateTime<Tz>) -> Self {
+        self.after = Some(dt);
+        self.after_inclusive = false;
         self
     }
 
@@ -214,7 +256,8 @@ impl RRuleSet {
             self.into_iter(),
             &self.after,
             &self.before,
-            true,
+            self.after_inclusive,
+            self.before_inclusive,
             Some(limit),
         )
     }
@@ -227,7 +270,15 @@ impl RRuleSet {
     /// very long iteration times. Please read the `SECURITY.md` for more information.
     #[must_use]
     pub fn all_unchecked(self) -> Vec<DateTime<Tz>> {
-        collect_with_error(self.into_iter(), &self.after, &self.before, true, None).dates
+        collect_with_error(
+            self.into_iter(),
+            &self.after,
+            &self.before,
+            self.after_inclusive,
+            self.before_inclusive,
+            None,
+        )
+        .dates
     }
 
     /// Returns `true` if the recurrence set generates an occurrence at
