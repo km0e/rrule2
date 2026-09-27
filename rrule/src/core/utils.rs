@@ -21,28 +21,45 @@ where
 {
     let mut list = vec![];
     let mut was_limited = false;
-    // This loop should always end because `.next()` has build in limits
-    // Once a limit is tripped it will break in the `None` case.
-    while limit.is_none() || matches!(limit, Some(limit) if usize::from(limit) > list.len()) {
-        if let Some(value) = iterator.next() {
-            if is_in_range(&value, start, end, inclusive) {
-                list.push(value);
+    let mut has_more = false;
+
+    loop {
+        // The caller's cap is reached. Check whether the rule can still
+        // produce another occurrence, to distinguish "truncated at the cap"
+        // from "the rule legitimately ends here" (e.g. `COUNT` exhausted at
+        // exactly `limit`). Computing one extra occurrence is cheap and exact.
+        if matches!(limit, Some(limit) if usize::from(limit) == list.len()) {
+            has_more = iterator.next().is_some();
+            if !has_more {
+                // The iterator ran out on its own. If it stopped because of
+                // the internal iteration safety limit (instead of natural
+                // exhaustion), surface that through `limited`.
+                was_limited = iterator.was_limited();
             }
-            if has_reached_the_end(&value, end, inclusive) {
-                // Date is after end date, so can stop iterating
-                break;
-            }
-        } else {
-            was_limited = iterator.was_limited();
             break;
         }
-    }
 
-    was_limited = was_limited || matches!(limit, Some(limit) if usize::from(limit) == list.len());
+        match iterator.next() {
+            Some(value) => {
+                if is_in_range(&value, start, end, inclusive) {
+                    list.push(value);
+                }
+                if has_reached_the_end(&value, end, inclusive) {
+                    // Date is after end date, so can stop iterating
+                    break;
+                }
+            }
+            None => {
+                was_limited = iterator.was_limited();
+                break;
+            }
+        }
+    }
 
     RRuleResult {
         dates: list,
         limited: was_limited,
+        has_more,
     }
 }
 

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed (breaking)
+
+- `RRuleResult` (returned by `RRuleSet::all`) gains a `has_more` field: `true` if the
+  rule can produce at least one more occurrence after the returned ones. It is exact:
+  a rule that legitimately ends exactly at the limit (e.g. `FREQ=DAILY;COUNT=10` with
+  `all(10)`) reports `has_more = false`.
+- `RRuleResult::limited` no longer reports `true` merely because the number of returned
+  dates equals the caller's `limit`. It is only `true` when the iteration was stopped
+  by the internal safety limits (its original purpose). Code that relied on `limited`
+  to detect truncation should switch to `has_more`
+
 ## 0.14.2 (2026-09-27)
 
 ### Added

@@ -857,3 +857,54 @@ fn contains_dst_transition_day() {
     assert!(set.contains(ymd_hms(2024, 3, 31, 1, 30, 0))); // 01:30 UTC = 02:30 BST.
     assert!(!set.contains(ymd_hms(2024, 3, 31, 2, 30, 0))); // 02:30 UTC = 03:30 BST.
 }
+
+#[test]
+fn all_reports_has_more_false_when_rule_ends_at_limit() {
+    // A rule that legitimately exhausts at exactly `limit` dates must not be
+    // reported as truncated: `limited` is false and `has_more` is false.
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=10"
+        .parse()
+        .unwrap();
+
+    let result = rruleset.clone().all(10);
+    assert_eq!(result.dates.len(), 10);
+    assert!(!result.limited, "rule exhausted, not truncated");
+    assert!(!result.has_more);
+}
+
+#[test]
+fn all_reports_has_more_true_for_unbounded_rule() {
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY"
+        .parse()
+        .unwrap();
+
+    let result = rruleset.all(10);
+    assert_eq!(result.dates.len(), 10);
+    assert!(!result.limited);
+    assert!(result.has_more);
+}
+
+#[test]
+fn all_reports_has_more_true_when_rule_exceeds_limit() {
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;COUNT=20"
+        .parse()
+        .unwrap();
+
+    let result = rruleset.all(10);
+    assert_eq!(result.dates.len(), 10);
+    assert!(!result.limited);
+    assert!(result.has_more);
+}
+
+#[test]
+fn all_reports_has_more_false_when_until_ends_within_limit() {
+    // UNTIL bounds the rule to exactly 10 occurrences (Jan 1 to Jan 10).
+    let rruleset: RRuleSet = "DTSTART:20240101T090000Z\nRRULE:FREQ=DAILY;UNTIL=20240110T090000Z"
+        .parse()
+        .unwrap();
+
+    let result = rruleset.all(10);
+    assert_eq!(result.dates.len(), 10);
+    assert!(!result.limited);
+    assert!(!result.has_more);
+}

@@ -36,9 +36,26 @@ pub struct RRuleSet {
 pub struct RRuleResult {
     /// List of recurrences.
     pub dates: Vec<DateTime<Tz>>,
-    /// It is being true if the list of dates is limited.
-    /// To indicate that it can potentially contain more dates.
+    /// `true` if the iteration was stopped by the iterator's internal safety
+    /// limits (see the "validator limits" docs) instead of running to
+    /// completion, in which case `dates` is only a lower bound.
+    ///
+    /// Note: reaching the caller's `limit` does **not** set this flag; use
+    /// [`RRuleResult::has_more`] to know whether the rule has more
+    /// occurrences beyond the returned ones.
     pub limited: bool,
+    /// `true` if the recurrence rule can produce at least one more
+    /// occurrence after the ones in `dates`.
+    ///
+    /// When the caller's `limit` is reached, this is determined by computing
+    /// a single extra occurrence, so it is exact: a rule that legitimately
+    /// ends exactly at the limit (e.g. `FREQ=DAILY;COUNT=10` with
+    /// `all(10)`) reports `has_more = false`. When the iteration ended on
+    /// its own, this is always `false`.
+    ///
+    /// If [`RRuleResult::limited`] is `true`, the iteration was stopped by
+    /// internal safety limits and `has_more` cannot be trusted.
+    pub has_more: bool,
 }
 
 impl RRuleSet {
@@ -187,7 +204,8 @@ impl RRuleSet {
     /// // Limit the results to 2 recurrences
     /// let result = rrule_set.all(2);
     /// assert_eq!(result.dates.len(), 2);
-    /// assert_eq!(result.limited, true);
+    /// // The daily rule never ends, so there are more recurrences.
+    /// assert_eq!(result.has_more, true);
     /// ```
     #[must_use]
     pub fn all(mut self, limit: u16) -> RRuleResult {
