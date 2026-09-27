@@ -986,3 +986,39 @@ fn exclusive_bounds_window() {
         ]
     );
 }
+
+#[test]
+fn parses_case_insensitive_input() {
+    // RFC 5545 §3.1: property names, property parameters, enumerated
+    // property values and the DATE-TIME `T`/`Z` designators are
+    // case-insensitive. Timezone *names* (IANA) remain case-sensitive.
+    let upper: RRuleSet = "DTSTART;TZID=UTC:20240101T090000\n\
+        RRULE:FREQ=DAILY;COUNT=5;BYDAY=MO,TU\n\
+        RDATE;TZID=UTC:20240201T090000\n\
+        EXDATE;TZID=UTC:20240103T090000"
+        .parse()
+        .unwrap();
+    let lower: RRuleSet = "dtstart;TZID=UTC:20240101t090000\n\
+        rrule:freq=daily;count=5;byday=mo,tu\n\
+        rdate;value=date-time;TZID=UTC:20240201t090000\n\
+        exdate;value=date-time;TZID=UTC:20240103t090000"
+        .parse()
+        .unwrap();
+
+    assert_eq!(lower.all(u16::MAX).dates, upper.all(u16::MAX).dates);
+}
+
+#[test]
+fn parses_value_date_parameter_case_insensitively() {
+    // `VALUE=date` (lowercase enum value) on DTSTART must behave like
+    // `VALUE=DATE`: the date is parsed as midnight in the timezone.
+    let rruleset: RRuleSet = "DTSTART;VALUE=date;TZID=UTC:20240401\nRRULE:FREQ=DAILY;COUNT=2"
+        .parse()
+        .unwrap();
+
+    let dates = rruleset.all(u16::MAX).dates;
+    assert_eq!(
+        dates,
+        vec![ymd_hms(2024, 4, 1, 0, 0, 0), ymd_hms(2024, 4, 2, 0, 0, 0)]
+    );
+}

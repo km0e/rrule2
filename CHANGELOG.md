@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Accept case-insensitive input per RFC 5545 §3.1 (names/parameters/enumerated values
+  were already handled inconsistently: RRULE keys, `FREQ` values and weekday values
+  were case-insensitive, while lowercase property names (`dtstart:`, `rrule:`), the
+  `VALUE` parameter values on `DTSTART` (`VALUE=date`), and the `T`/`Z` designators in
+  DATE-TIME values (`20240101t090000z`) were rejected). Timezone names (IANA, e.g.
+  `Europe/Berlin`) remain case-sensitive
+
 ### Added
 
 - `RRuleSet::before_exclusive(dt)` and `RRuleSet::after_exclusive(dt)`: bounds that

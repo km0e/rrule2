@@ -48,8 +48,16 @@ impl ParsedDateString {
 
         let captures = DATESTR_RE
             .get_or_init(|| {
+                // RFC 5545 §3.1: names and values are case-insensitive, and
+                // RFC 5234 §2.3 makes ABNF string literals case-insensitive,
+                // so the `T` separator and `Z` UTC designator accept any
+                // casing (e.g. `20240101t090000z`).
+                // RFC 5545 §3.1: names and values are case-insensitive, and
+                // RFC 5234 §2.3 makes ABNF string literals case-insensitive,
+                // so the `T` separator and `Z` UTC designator accept any
+                // casing (e.g. `20240101t090000z`).
                 Regex::new(
-                    r"(?m)^([0-9]{4})([0-9]{2})([0-9]{2})(T([0-9]{2})([0-9]{2})([0-9]{2})(Z?))?$",
+                    r"(?m)^([0-9]{4})([0-9]{2})([0-9]{2})([Tt]([0-9]{2})([0-9]{2})([0-9]{2})([Zz]?))?$",
                 )
                 .expect("DATESTR_RE must compile")
             })
@@ -71,7 +79,7 @@ impl ParsedDateString {
         };
 
         let zulu_timezone_set = match captures.get(8) {
-            Some(part) => part.as_str() == "Z",
+            Some(part) => part.as_str().eq_ignore_ascii_case("Z"),
             None => false,
         };
         let flags = ParsedDateStringFlags { zulu_timezone_set };
@@ -92,7 +100,10 @@ pub(crate) fn get_property_name(val: &str) -> Result<Option<PropertyName>, Parse
 
     PARSE_PROPERTY_NAME_RE
         .get_or_init(|| {
-            Regex::new(r"(?m)^([A-Z]+?)[:;]").expect("PARSE_PROPERTY_NAME_RE regex must compile")
+            // RFC 5545 §3.1: property names are case-insensitive.
+            // RFC 5545 §3.1: property names are case-insensitive. (`from_str`
+            // uppercases the captured name afterwards.)
+            Regex::new(r"(?m)^([A-Za-z]+?)[:;]").expect("PARSE_PROPERTY_NAME_RE regex must compile")
         })
         .captures(val)
         .and_then(|captures| captures.get(1))

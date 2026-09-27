@@ -23,11 +23,21 @@ impl<'a> ContentLineCaptures<'a> {
             }),
             property_name => {
                 let mut parameters = None;
-                if line.starts_with(&format!("{};", property_name)) {
+                // Compare the recognized (uppercase) property name against
+                // the line prefix case-insensitively, per RFC 5545 §3.1.
+                let name = property_name.to_string();
+                let name_len = name.len();
+                let has_parameters = match line.get(..name_len) {
+                    Some(prefix) => {
+                        prefix.eq_ignore_ascii_case(&name)
+                            && line.as_bytes().get(name_len) == Some(&b';')
+                    }
+                    None => false,
+                };
+                if has_parameters {
                     let only_colon_idx = line.find(':');
                     if let Some(only_colon_idx) = only_colon_idx {
-                        parameters =
-                            Some(&line[property_name.to_string().len() + 1..only_colon_idx]);
+                        parameters = Some(&line[name_len + 1..only_colon_idx]);
                     }
                 }
 

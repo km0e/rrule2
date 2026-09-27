@@ -47,7 +47,9 @@ impl TryFrom<&ContentLineCaptures<'_>> for StartDateContentLine {
             "DATE"
         };
         if let Some(value_in_parameter) = value_in_parameter {
-            if value_in_parameter != value {
+            // RFC 5545 §3.1: enumerated property parameter values are
+            // case-insensitive (e.g. `VALUE=date` equals `VALUE=DATE`).
+            if !value_in_parameter.eq_ignore_ascii_case(value) {
                 return Err(ParseError::ParameterValueMismatch {
                     parameter: "VALUE".into(),
                     parameter_value: value_in_parameter.into(),
