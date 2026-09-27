@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `RRuleSet::contains(dt)`: returns whether the recurrence set generates an occurrence
+  at exactly the given instant (`RRULE`/`RDATE` membership minus `EXDATE`/`EXRULE`).
+  Datetimes are compared by instant, the `before`/`after` bounds are ignored (consistent
+  with the iterator API), and iteration stops at the first occurrence past `dt`
+  ([#81](https://github.com/fmeringdal/rust-rrule/issues/81))
+
 ### Fixed
 
 - The iterator no longer emits the same instant twice on a DST spring-forward day.
