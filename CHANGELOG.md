@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Criterion benchmark suite (`benches/parse.rs`, `benches/iterate.rs`) covering parsing
+  (incl. `TZID` and case-insensitive input), iteration across frequencies, DST
+  spring-forward iteration, mixed RRULE/RDATE/EXDATE sets, `contains()` and
+  serialization, with a recorded baseline in `benches/README.md`
+  (direction of [#86](https://github.com/fmeringdal/rust-rrule/issues/86))
+
 - `RRuleSet::before_exclusive(dt)` and `RRuleSet::after_exclusive(dt)`: bounds that
   exclude the boundary datetime itself, mirroring the `inc=False` default of
   `dateutil.rrule.rruleset.before`/`after`/`between`. The existing `before`/`after`
