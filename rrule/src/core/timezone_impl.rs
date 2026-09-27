@@ -91,19 +91,15 @@ impl TimeZone for Tz {
         }
     }
 
-    #[allow(deprecated)]
+    #[allow(deprecated)] // the trait method itself is deprecated (required impl)
     fn offset_from_local_date(
         &self,
         local: &chrono::NaiveDate,
     ) -> chrono::LocalResult<Self::Offset> {
-        match self {
-            Self::Local(tz) => tz
-                .from_local_date(local)
-                .map(|date| RRuleOffset::Local(*date.offset())),
-            Self::Tz(tz) => tz
-                .from_local_date(local)
-                .map(|date| RRuleOffset::Tz(*date.offset())),
-        }
+        // Delegate to the non-deprecated datetime-based method; the offset at
+        // midnight is the offset for the whole date (same convention as
+        // chrono's own `Local` and `chrono-tz` implementations).
+        self.offset_from_local_datetime(&local.and_time(chrono::NaiveTime::MIN))
     }
 
     fn offset_from_local_datetime(
@@ -120,12 +116,11 @@ impl TimeZone for Tz {
         }
     }
 
-    #[allow(deprecated)]
+    #[allow(deprecated)] // the trait method itself is deprecated (required impl)
     fn offset_from_utc_date(&self, utc: &chrono::NaiveDate) -> Self::Offset {
-        match self {
-            Self::Local(tz) => RRuleOffset::Local(*tz.from_utc_date(utc).offset()),
-            Self::Tz(tz) => RRuleOffset::Tz(*tz.from_utc_date(utc).offset()),
-        }
+        // Delegate to the non-deprecated datetime-based method; see
+        // `offset_from_local_date` above.
+        self.offset_from_utc_datetime(&utc.and_time(chrono::NaiveTime::MIN))
     }
 
     fn offset_from_utc_datetime(&self, utc: &chrono::NaiveDateTime) -> Self::Offset {
