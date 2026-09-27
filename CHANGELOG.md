@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Display` for `NWeekday::Nth` now always includes the ordinal, so `Nth(1, ...)` serializes to `1MO` instead of `MO` (which means `Every` and has different semantics) ([#148](https://github.com/fmeringdal/rust-rrule/issues/148))
 - `RDATE`/`EXDATE` with `VALUE=DATE` (date without time) no longer log a warning; date values are parsed as midnight in the applicable timezone ([#146](https://github.com/fmeringdal/rust-rrule/issues/146))
 
+### Documentation
+
+- Document that `RRuleSet::into_iter()` does not apply the `after`/`before` bounds of the `RRuleSet`; those are only applied by `all()`/`all_unchecked()` ([#137](https://github.com/fmeringdal/rust-rrule/issues/137))
+
 ## 0.14.0 (2025-04-20)
 
 - MSRV is bumped to `1.81.0` from `v1.74.0`

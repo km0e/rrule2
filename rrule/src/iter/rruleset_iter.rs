@@ -10,6 +10,10 @@ use std::{collections::HashMap, iter::Iterator};
 
 #[derive(Debug, Clone)]
 /// Iterator over all the dates in an [`RRuleSet`].
+///
+/// Note: the `after` and `before` bounds set on the [`RRuleSet`] are **not**
+/// applied by this iterator; they are only applied by [`RRuleSet::all`] and
+/// [`RRuleSet::all_unchecked`]. See fmeringdal/rust-rrule#137.
 pub struct RRuleSetIter {
     queue: HashMap<usize, DateTime<Tz>>,
     limited: bool,
@@ -202,6 +206,9 @@ impl Iterator for RRuleSetIter {
     }
 }
 
+/// Note: the `after` and `before` bounds set on the [`RRuleSet`] are **not**
+/// applied by the returned iterator; they are only applied by
+/// [`RRuleSet::all`] and [`RRuleSet::all_unchecked`].
 impl IntoIterator for &RRuleSet {
     type Item = DateTime<Tz>;
 

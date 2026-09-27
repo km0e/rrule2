@@ -4,6 +4,34 @@ use crate::{Frequency, NWeekday, RRule, RRuleSet, Weekday};
 use chrono::{Datelike, TimeZone};
 
 #[test]
+fn yearly_bymonthday_without_bymonth() {
+    // `FREQ=YEARLY;BYMONTHDAY=20` selects the 20th day of every month:
+    // YEARLY expands the whole year and BYMONTHDAY then limits it.
+    // See fmeringdal/rust-rrule#127.
+    let rrule = RRule {
+        freq: Frequency::Yearly,
+        count: Some(5),
+        by_month_day: vec![20],
+        by_hour: vec![8],
+        by_minute: vec![0],
+        by_second: vec![0],
+        ..Default::default()
+    };
+    test_recurring_rrule(
+        rrule,
+        true,
+        ymd_hms(2021, 4, 20, 8, 0, 0),
+        &[
+            ymd_hms(2021, 4, 20, 8, 0, 0),
+            ymd_hms(2021, 5, 20, 8, 0, 0),
+            ymd_hms(2021, 6, 20, 8, 0, 0),
+            ymd_hms(2021, 7, 20, 8, 0, 0),
+            ymd_hms(2021, 8, 20, 8, 0, 0),
+        ],
+    );
+}
+
+#[test]
 fn yearly() {
     let rrule = RRule {
         freq: Frequency::Yearly,
