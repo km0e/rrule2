@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- Fix `RRuleSet` emitting a duplicate occurrence when an `RDATE` equals a date already produced by an `RRULE` (or another `RRULE`), and when the same `RDATE` is listed more than once, per RFC 5545 §3.8.5.3 ([#150](https://github.com/fmeringdal/rust-rrule/issues/150))
+
 ## 0.14.0 (2025-04-20)
 
 - MSRV is bumped to `1.81.0` from `v1.74.0`

@@ -144,16 +144,19 @@ impl Iterator for RRuleSetIter {
                 match next_date {
                     None => next_date = Some((i, next_rrule_date)),
                     Some((idx, date)) => {
-                        if date >= next_rrule_date {
+                        if date > next_rrule_date {
                             // Add previous date to its rrule queue
                             self.queue.insert(idx, date);
 
                             // Update next_date
                             next_date = Some((i, next_rrule_date));
-                        } else {
+                        } else if date < next_rrule_date {
                             // Store for next iterations
                             self.queue.insert(i, next_rrule_date);
                         }
+                        // `date == next_rrule_date`: drop the duplicate occurrence,
+                        // per RFC 5545 §3.8.5.3. The kept date has already been
+                        // consumed from its iterator, so it cannot be emitted again.
                     }
                 }
             }
@@ -174,15 +177,19 @@ impl Iterator for RRuleSetIter {
             Some(first_rdate) => {
                 let next_date = match next_date {
                     Some(next_date) => {
-                        if next_date.1 >= first_rdate {
+                        if next_date.1 > first_rdate {
                             // Add previous date to its rrule queue
                             self.queue.insert(next_date.0, next_date.1);
 
                             first_rdate
-                        } else {
+                        } else if next_date.1 < first_rdate {
                             // add rdate back
                             self.rdates.push(first_rdate);
 
+                            next_date.1
+                        } else {
+                            // Equal dates: drop the duplicate `RDATE` occurrence,
+                            // per RFC 5545 §3.8.5.3.
                             next_date.1
                         }
                     }
@@ -205,6 +212,9 @@ impl IntoIterator for &RRuleSet {
         let mut rdates_sorted = self.rdate.clone();
         rdates_sorted
             .sort_by(|d1, d2| d2.partial_cmp(d1).expect("Could not order dates correctly"));
+
+        // Remove duplicate `RDATE` values, per RFC 5545 §3.8.5.3.
+        rdates_sorted.dedup_by(|d1, d2| d1.timestamp() == d2.timestamp());
 
         let limited = self.limited;
 
