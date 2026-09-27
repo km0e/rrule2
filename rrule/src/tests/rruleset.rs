@@ -726,3 +726,63 @@ fn exdate_with_date_value_excludes_occurrence() {
         ],
     );
 }
+
+#[test]
+fn display_roundtrip_preserves_occurrences() {
+    // Regression test for fmeringdal/rust-rrule#98: serializing an `RRuleSet`
+    // and parsing the result back must yield the same set of occurrences.
+    let rruleset_str = "DTSTART;TZID=Europe/Berlin:20240530T200000\n\
+        RRULE:FREQ=WEEKLY;COUNT=3;INTERVAL=1;BYDAY=WE\n\
+        RDATE;TZID=Europe/Berlin:20240701T120000\n\
+        EXDATE;TZID=Europe/Berlin:20240605T200000";
+    let rruleset = RRuleSet::from_str(rruleset_str).unwrap();
+
+    let printed = rruleset.to_string();
+    let reparsed = RRuleSet::from_str(&printed)
+        .unwrap_or_else(|err| panic!("failed to reparse serialized RRuleSet `{printed}`: {err}"));
+
+    let dates: Vec<_> = rruleset.all(u16::MAX).dates;
+    let reparsed_dates: Vec<_> = reparsed.all(u16::MAX).dates;
+
+    assert_eq!(
+        reparsed_dates
+            .iter()
+            .map(chrono::DateTime::timestamp)
+            .collect::<Vec<_>>(),
+        dates
+            .iter()
+            .map(chrono::DateTime::timestamp)
+            .collect::<Vec<_>>(),
+        "roundtrip changed occurrences; serialized string was:\n{printed}"
+    );
+}
+
+#[test]
+fn display_roundtrip_floating_times_preserves_occurrences() {
+    // Same as `display_roundtrip_preserves_occurrences`, but with floating
+    // (no TZID) times, which are interpreted in the system-local timezone.
+    let rruleset_str = "DTSTART:20240101T090000\n\
+        RRULE:FREQ=DAILY;COUNT=2\n\
+        RDATE:20240105T090000\n\
+        EXDATE:20240102T090000";
+    let rruleset = RRuleSet::from_str(rruleset_str).unwrap();
+
+    let printed = rruleset.to_string();
+    let reparsed = RRuleSet::from_str(&printed)
+        .unwrap_or_else(|err| panic!("failed to reparse serialized RRuleSet `{printed}`: {err}"));
+
+    let dates: Vec<_> = rruleset.all(u16::MAX).dates;
+    let reparsed_dates: Vec<_> = reparsed.all(u16::MAX).dates;
+
+    assert_eq!(
+        reparsed_dates
+            .iter()
+            .map(chrono::DateTime::timestamp)
+            .collect::<Vec<_>>(),
+        dates
+            .iter()
+            .map(chrono::DateTime::timestamp)
+            .collect::<Vec<_>>(),
+        "roundtrip changed occurrences; serialized string was:\n{printed}"
+    );
+}

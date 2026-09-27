@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- `Display` for `RRuleSet` no longer corrupts `RDATE` and `EXDATE` values in non-local
+  timezones: the local wall clock time used to be emitted with a `Z` (UTC) designator
+  appended, shifting the instant by the UTC offset and breaking
+  `rrule_set.to_string().parse::<RRuleSet>()` roundtrips (e.g. an `EXDATE` no longer
+  matching the occurrence it should exclude). Non-local values are now converted to UTC
+  before serialization; floating (local) values keep their previous form
+  ([#98](https://github.com/fmeringdal/rust-rrule/issues/98))
+
 ## 0.14.1 (2026-09-27)
 
 Published as the separate crate [`rrule2`](https://crates.io/crates/rrule2), a maintained fork of `rrule` 0.14.0 (same API, additional fixes).

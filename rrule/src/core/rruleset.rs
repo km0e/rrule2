@@ -2,7 +2,7 @@ use crate::core::datetime::datetime_to_ical_format;
 use crate::core::utils::collect_with_error;
 use crate::parser::{ContentLine, Grammar};
 use crate::{ParseError, RRule, RRuleError, Tz};
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 #[cfg(feature = "serde")]
 use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
 use std::fmt::Display;
@@ -300,9 +300,18 @@ impl Display for RRuleSet {
             .rdate
             .iter()
             .map(|dt| {
-                let maybe_zulu = if dt.timezone().is_local() { "" } else { "Z" };
-
-                format!("{}{}", dt.format("%Y%m%dT%H%M%S"), maybe_zulu)
+                if dt.timezone().is_local() {
+                    // Floating time: emitted without a UTC designator, it is
+                    // interpreted in the system-local timezone when parsed.
+                    dt.format("%Y%m%dT%H%M%S").to_string()
+                } else {
+                    // Convert to UTC before appending the `Z` designator.
+                    // Appending `Z` to the local wall clock time (as this used
+                    // to do) changes the instant the datetime refers to, which
+                    // corrupts `RRuleSet` roundtrips.
+                    // See <https://github.com/fmeringdal/rust-rrule/issues/98>.
+                    format!("{}Z", dt.with_timezone(&Utc).format("%Y%m%dT%H%M%S"))
+                }
             })
             .collect::<Vec<_>>()
             .join(",");
@@ -325,9 +334,18 @@ impl Display for RRuleSet {
             .exdate
             .iter()
             .map(|dt| {
-                let maybe_zulu = if dt.timezone().is_local() { "" } else { "Z" };
-
-                format!("{}{}", dt.format("%Y%m%dT%H%M%S"), maybe_zulu)
+                if dt.timezone().is_local() {
+                    // Floating time: emitted without a UTC designator, it is
+                    // interpreted in the system-local timezone when parsed.
+                    dt.format("%Y%m%dT%H%M%S").to_string()
+                } else {
+                    // Convert to UTC before appending the `Z` designator.
+                    // Appending `Z` to the local wall clock time (as this used
+                    // to do) changes the instant the datetime refers to, which
+                    // corrupts `RRuleSet` roundtrips.
+                    // See <https://github.com/fmeringdal/rust-rrule/issues/98>.
+                    format!("{}Z", dt.with_timezone(&Utc).format("%Y%m%dT%H%M%S"))
+                }
             })
             .collect::<Vec<_>>()
             .join(",");
