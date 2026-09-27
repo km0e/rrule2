@@ -23,6 +23,12 @@ pub(crate) struct RRuleIter {
     pub(crate) count: Option<u32>,
     /// If the iterator should be using iterator limits.
     pub(crate) limited: bool,
+    /// Timestamp of the most recently pushed occurrence.
+    /// Used to suppress duplicate instants created by DST transitions:
+    /// two adjacent time slots can resolve to the same instant (e.g. the
+    /// gapped 01:30 slot and the 02:30 slot on a spring-forward day), and
+    /// the recurrence set must not contain the same instant twice.
+    pub(crate) last_pushed_ts: Option<i64>,
     /// If the iterator has been stopped by the iterator limits.
     pub(crate) was_limited: bool,
 }
@@ -46,6 +52,7 @@ impl RRuleIter {
             finished: false,
             count,
             limited,
+            last_pushed_ts: None,
             was_limited: false,
         }
     }
@@ -58,6 +65,7 @@ impl RRuleIter {
         count: &mut Option<u32>,
         buffer: &mut VecDeque<chrono::DateTime<Tz>>,
         dt_start: &chrono::DateTime<Tz>,
+        last_pushed_ts: &mut Option<i64>,
     ) -> bool {
         if matches!(rrule.until, Some(until) if dt > until) {
             // We can break because `pos_list` is sorted and
@@ -66,6 +74,17 @@ impl RRuleIter {
         }
 
         if dt >= *dt_start {
+            // DST transitions can make two adjacent time slots resolve to
+            // the same instant (e.g. on a spring-forward day the gapped
+            // 01:30 slot is shifted onto the 02:30 slot). The recurrence
+            // set must not contain the same instant twice, so skip it.
+            // See <https://github.com/fmeringdal/rust-rrule/issues/115>.
+            let ts = dt.timestamp();
+            if *last_pushed_ts == Some(ts) {
+                return false;
+            }
+            *last_pushed_ts = Some(ts);
+
             buffer.push_back(dt);
 
             if let Some(count) = count {
@@ -145,6 +164,7 @@ impl RRuleIter {
                             &mut self.count,
                             &mut self.buffer,
                             &self.dt_start,
+                            &mut self.last_pushed_ts,
                         ) {
                             return true;
                         }
@@ -165,6 +185,7 @@ impl RRuleIter {
                         &mut self.count,
                         &mut self.buffer,
                         &self.dt_start,
+                        &mut self.last_pushed_ts,
                     ) {
                         return true;
                     }

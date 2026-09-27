@@ -126,3 +126,58 @@ fn daylight_savings_rdate_in_gap() {
         &["2025-03-30T02:30:00+01:00"], // RDATE, resolved out of the gap.
     );
 }
+
+#[test]
+fn daylight_savings_spring_forward_no_duplicate_instant() {
+    // Regression test for fmeringdal/rust-rrule#115: on a spring-forward day
+    // the gapped time slot and the following slot resolve to the same
+    // instant (01:30 does not exist, so it is shifted onto 02:30). The
+    // recurrence set must not contain the same instant twice, and `COUNT`
+    // must count distinct occurrences.
+    let dates = "DTSTART;TZID=Europe/London:20240330T233000\n\
+        RRULE:FREQ=HOURLY;COUNT=8"
+        .parse::<RRuleSet>()
+        .unwrap()
+        .all(u16::MAX)
+        .dates;
+    check_occurrences(
+        &dates,
+        &[
+            "2024-03-30T23:30:00+00:00",
+            "2024-03-31T00:30:00+00:00",
+            // 01:30 GMT does not exist (clocks jump 01:00 -> 02:00 BST).
+            "2024-03-31T02:30:00+01:00",
+            "2024-03-31T03:30:00+01:00",
+            "2024-03-31T04:30:00+01:00",
+            "2024-03-31T05:30:00+01:00",
+            "2024-03-31T06:30:00+01:00",
+            "2024-03-31T07:30:00+01:00",
+        ],
+    );
+}
+
+#[test]
+fn daylight_savings_fall_back_wall_clock_counted_once() {
+    // On a fall-back day 01:30 occurs twice; each wall clock time is
+    // generated once (using the offset before the transition) and no
+    // instants are skipped.
+    let dates = "DTSTART;TZID=Europe/London:20241026T233000\n\
+        RRULE:FREQ=HOURLY;COUNT=8"
+        .parse::<RRuleSet>()
+        .unwrap()
+        .all(u16::MAX)
+        .dates;
+    check_occurrences(
+        &dates,
+        &[
+            "2024-10-26T23:30:00+01:00",
+            "2024-10-27T00:30:00+01:00",
+            "2024-10-27T01:30:00+01:00", // First (BST) occurrence of 01:30.
+            "2024-10-27T02:30:00+00:00",
+            "2024-10-27T03:30:00+00:00",
+            "2024-10-27T04:30:00+00:00",
+            "2024-10-27T05:30:00+00:00",
+            "2024-10-27T06:30:00+00:00",
+        ],
+    );
+}

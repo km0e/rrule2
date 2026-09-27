@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The iterator no longer emits the same instant twice on a DST spring-forward day.
+  Two adjacent time slots can resolve to the same instant (e.g. in Europe/London on
+  2024-03-31 the gapped 01:30 slot is shifted onto 02:30 BST, which is also generated
+  by the 02:30 slot); duplicate instants are now suppressed and `COUNT` counts distinct
+  occurrences ([#115](https://github.com/fmeringdal/rust-rrule/issues/115))
+
 - `DTSTART`, `RDATE` and `EXDATE` values that fall on a DST transition are no longer
   rejected. Per RFC 5545 §3.3.5, a local time that does not exist (gap when clocks
   jump forward) is interpreted using the UTC offset before the gap, and a local time
